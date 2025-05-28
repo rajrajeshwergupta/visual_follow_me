@@ -483,7 +483,7 @@ void AP_Camera_Backend::handle_message_camera_information(mavlink_channel_t chan
     const uint8_t fw_ver_build = (camera_settings._cam_info.firmware_version & 0xFF000000) >> 24;
 
     // display camera info to user
-    gcs().send_text(MAV_SEVERITY_INFO, "Camera: %s.32 %s.32 fw:%u.%u.%u.%u",
+    gcs().send_text(MAV_SEVERITY_INFO, "Camera: %.32s %.32s fw:%u.%u.%u.%u",
             camera_settings._cam_info.vendor_name,
             camera_settings._cam_info.model_name,
             (unsigned)fw_ver_major,
