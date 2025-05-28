@@ -8,6 +8,7 @@
 
 #include <AP_Param/AP_Param.h>
 #include <GCS_MAVLink/GCS_MAVLink.h>
+#include <GCS_MAVLink/ap_message.h>
 #include "AP_Camera_Params.h"
 #include "AP_Camera_shareddefs.h"
 
@@ -86,22 +87,9 @@ public:
     // handle MAVLink command from GCS to control the camera
     MAV_RESULT handle_command(const mavlink_command_int_t &packet);
 
-    // send camera feedback message to GCS
-    void send_feedback(mavlink_channel_t chan);
-
-    // send camera information message to GCS
-    void send_camera_information(mavlink_channel_t chan);
-
-    // send camera settings message to GCS
-    void send_camera_settings(mavlink_channel_t chan);
-
-#if AP_CAMERA_SEND_FOV_STATUS_ENABLED
-    // send camera field of view status
-    void send_camera_fov_status(mavlink_channel_t chan);
-#endif
-
-    // send camera capture status message to GCS
-    void send_camera_capture_status(mavlink_channel_t chan);
+    // send a mavlink message; returns false if there was not space to
+    // send the message, true otherwise
+    bool send_mavlink_message(class GCS_MAVLINK &link, const enum ap_message id);
 
     // configure camera
     void configure(float shooting_mode, float shutter_speed, float aperture, float ISO, int32_t exposure_type, int32_t cmd_id, float engine_cutoff_time);
@@ -150,11 +138,14 @@ public:
     SetFocusResult set_focus(FocusType focus_type, float focus_value);
     SetFocusResult set_focus(uint8_t instance, FocusType focus_type, float focus_value);
 
+    #if AP_CAMERA_TRACKING_ENABLED
     // set tracking to none, point or rectangle (see TrackingType enum)
     // if POINT only p1 is used, if RECTANGLE then p1 is top-left, p2 is bottom-right
     // p1,p2 are in range 0 to 1.  0 is left or top, 1 is right or bottom
-    bool set_tracking(TrackingType tracking_type, const Vector2f& p1, const Vector2f& p2);
-    bool set_tracking(uint8_t instance, TrackingType tracking_type, const Vector2f& p1, const Vector2f& p2);
+    bool set_tracking(TrackingType tracking_type, const Vector2f& top_left, const Vector2f& bottom_right);
+    bool set_tracking(uint8_t instance, TrackingType tracking_type, const Vector2f& top_left, const Vector2f& bottom_right);
+    bool is_tracking_object_visible(uint8_t instance);
+    #endif
 
 #if AP_CAMERA_SET_CAMERA_SOURCE_ENABLED
     // set camera lens as a value from 0 to 5, instance starts from 0
@@ -231,6 +222,26 @@ private:
 
     // perform any required parameter conversion
     void convert_params();
+
+    // send camera feedback message to GCS
+    void send_feedback(mavlink_channel_t chan);
+
+    // send camera information message to GCS
+    void send_camera_information(mavlink_channel_t chan);
+
+    // send camera settings message to GCS
+    void send_camera_settings(mavlink_channel_t chan);
+
+#if AP_CAMERA_SEND_FOV_STATUS_ENABLED
+    // send camera field of view status
+    void send_camera_fov_status(mavlink_channel_t chan);
+#endif
+
+    // send camera capture status message to GCS
+    void send_camera_capture_status(mavlink_channel_t chan);
+
+    // send camera tracking image status message
+    void send_camera_tracking_image_status(mavlink_channel_t chan);
 
     HAL_Semaphore _rsem;                // semaphore for multi-thread access
     AP_Camera_Backend *primary;         // primary camera backed
